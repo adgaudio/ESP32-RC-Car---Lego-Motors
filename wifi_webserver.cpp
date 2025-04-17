@@ -1,16 +1,17 @@
 #include "wifi_webserver.h"
 #include "lego_motor.h"
 #include <Arduino.h>
-#include <WebServer.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h> // For HTTPS
 
 
 #ifndef SSID_NAME
 #define SSID_NAME "Esp32Car"
 #endif
 
+
 namespace WiFi_WebServer {
-WebServer server(80);
+WiFiServerSecure server(443); // HTTPS uses port 443
 
 // HTML content
 const char *htmlPage = R"rawliteral(
@@ -108,6 +109,65 @@ document.getElementById("direction_button").addEventListener("click", () => {
 </html>
 )rawliteral";
 
+
+// openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/C=US/ST=MD/L=Baltimore/O=GreenMount School Engineering Club/OU=Unit/CN=GMSEng"
+//
+const char *certPem = R"rawliteral(
+-----BEGIN CERTIFICATE-----
+MIID1zCCAr+gAwIBAgIUenmmpDyLN06UOMR+YKd7uderkscwDQYJKoZIhvcNAQEL
+BQAwezELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAk1EMRIwEAYDVQQHDAlCYWx0aW1v
+cmUxKzApBgNVBAoMIkdyZWVuTW91bnQgU2Nob29sIEVuZ2luZWVyaW5nIENsdWIx
+DTALBgNVBAsMBFVuaXQxDzANBgNVBAMMBkdNU0VuZzAeFw0yNTA0MTcxODAwNDVa
+Fw0yNjA0MTcxODAwNDVaMHsxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJNRDESMBAG
+A1UEBwwJQmFsdGltb3JlMSswKQYDVQQKDCJHcmVlbk1vdW50IFNjaG9vbCBFbmdp
+bmVlcmluZyBDbHViMQ0wCwYDVQQLDARVbml0MQ8wDQYDVQQDDAZHTVNFbmcwggEi
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7lM6IWrdZci9VuDlWuywvJGCY
+0tMANYbVkk6CnydqWaCivUUx0B/mZ9ESuNhNCkxn1SHeGsOb/Iw9PsTplKOmUtfL
++m8Q22MXNXRTR9JeI6vTLiM7fjavtxUggq01azaHQ+IeM3OvaZbB1WV+UvHFSR4z
+//iBKpEH5fyWjYhuf1sLs+RjmMkDa/n/Yrqj5dvgxD2No7s8pxWrcBStXjBmiwG+
+NYP5uM+Frv/3Er634EaRakid8r46kQOOnzn0tjymXwoXF6rSZDO/L+aCT3mI/TOK
+meenPwQ0a5OXgKWBwWb/6GLixR1ObZ3OeSgzI0kGCBNiYFU8o0Wwf6a98vsBAgMB
+AAGjUzBRMB0GA1UdDgQWBBQN4y3ZfP53wVeq5dSk1xia1/0/BjAfBgNVHSMEGDAW
+gBQN4y3ZfP53wVeq5dSk1xia1/0/BjAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3
+DQEBCwUAA4IBAQBZtcBjOBmzU/7GZHBuHuqrympHvOy3z+5rE+hCPaGkSeYAH95m
+CpGdxAuXVZzhg+4p6PFfwrOp3l6XGebtikPnJzvyCvmnzGWU7bp2254nUyPjfgP5
+euApmEnydv0sa28CaaKWQEbInFwrCesbvhwgqKmjHaPD/a2zBj7ermeUEayjTkCZ
+twCubbtNrlmsDfVl2RDUO2dJggLJIQDUwU0VTmWP0lKEJsDdY6jRzoMsCUeNkpf7
+WtHldHXGaEn18nAxuR+e2xciLDdvntWlitkT8TzFQSMj0+fn9Wenm14eTlF+akHD
+3SyNhf3jvLCPirKaEzLmwXuQXgoXbai0uESG
+-----END CERTIFICATE-----
+)rawliteral";
+const char *keyPem = R"rawliteral(
+-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC7lM6IWrdZci9V
+uDlWuywvJGCY0tMANYbVkk6CnydqWaCivUUx0B/mZ9ESuNhNCkxn1SHeGsOb/Iw9
+PsTplKOmUtfL+m8Q22MXNXRTR9JeI6vTLiM7fjavtxUggq01azaHQ+IeM3OvaZbB
+1WV+UvHFSR4z//iBKpEH5fyWjYhuf1sLs+RjmMkDa/n/Yrqj5dvgxD2No7s8pxWr
+cBStXjBmiwG+NYP5uM+Frv/3Er634EaRakid8r46kQOOnzn0tjymXwoXF6rSZDO/
+L+aCT3mI/TOKmeenPwQ0a5OXgKWBwWb/6GLixR1ObZ3OeSgzI0kGCBNiYFU8o0Ww
+f6a98vsBAgMBAAECggEAUOCzQCVlAoLyF9KLnnKrdVQI9juIUIHDthgUE8vNcdRd
+J23WBMlIx84hXiIm2OjE0swZgyslBf+Y89s5icDV4qO7ea5r7ue4zMv2cOX5tS9K
+KY6uEDu2FoMo79CIIA0vAJlrSDxE9+/d2YtJ7HKU3cxN4nvOSNryl2Y5RyyVE5bF
+t9SFvVyVQKK15Y2tkYUMz924b00VzF6UounGY5JAD2NWOqBwtyeubXM55baqg5N+
+9YmG8xwBAlDRv5FiBP80WmzGwq5k5zwxKCB38sS3fgVXbVG0K1pz6tKLfcCs6xB3
+/j66pJaxZi+hkNdpW9nxBgZAPLhqiND1udjGzwblVQKBgQD0GglMzgc2XLeYpz+L
+ZZUmBHYLz80OcLMsF3j2SdKqpCoSTTRwCXpJgJabDNjIKrtut1mzUdhfgIh+Vush
+lYGo8RCbP6oio/Wjm8bAdYCcZEDs4KC9BzvXBfF8hfNVZFuaqao6k8qj1103a6Uj
+ZuSONyeGpVJGqyy8Z6YcVfe8UwKBgQDEuX55q5ALllDhvGoAzTVWiP8lSxe9qWea
+0UllbD7fJ5cNaUd+7+xto5kQ5VQ+RAgzWsDhbeMWLsmHFuWqIUfA0eEnNhwB6TAO
+fbijRWXi/5nq5rxMi0c2X+lZduRvHEVPQI5vvcssg1lHR6GU4YYH3HbWurYqmxtt
+T1me60ug2wKBgAtpjDXDDCNGgm7ootfpj+ePHdW/iV67diUBk+4v1WGU+0KPyXvT
+dZwqHuBw4VG6bbjnaZIwqWUNpVQCzEttqfo0Cwq3F0U3VSypA8nLtI+bQE3S0rED
+vZB3/qpLuOytHHtGo2bJshem4fzNU5MsJFNh0L9Cy23yYs0MK3/3pPVxAoGANPEK
+lWnTURr511YiXObc1NX3fCzSTctaQ3LRQsc3wExiPUy43fNpeDQPzFk7K6qZXmCt
+Cb3N4DllKMLDud5M9hpFco0ASo9bzHqPBvl1KvrIjEveHudYmcyD+vyhCznbeTGR
+Y4b7N5Z9n04qsOtka5csMCt9PMgTQH6bSsZdywMCgYBY5raXGYDqMq2Lw3vYL8pm
+Pl9Sy0Ql0QUgFxWSL+oxkAe5WA9WyuisJMklSeIc8C7DAZz1XgcE6LOWDYvIKbPl
+mSBTmmxeBJ5p+hqMQXcH1z4p7JtfZGCUMbSi/Z/LW8kTRi8Kr+XdVLj4aqoHji6a
+6qatxfWMqz8Fb1n2Zs5gHw==
+-----END PRIVATE KEY-----
+)rawliteral";
+
 void controlMotorsRequest(LegoDCMotor &left_motor, LegoDCMotor &right_motor) {
   // if (server.hasArg("left_direction") && server.hasArg("left_speed")) {
     bool left_direction = server.arg("left_direction").toInt();
@@ -126,6 +186,10 @@ void init(LegoDCMotor &left_motor, LegoDCMotor &right_motor) {
   // Establish the ESP32 as a WiFi access point
   WiFi.mode(WIFI_AP);
   WiFi.softAP(SSID_NAME, "12341234");
+
+  // Load SSL/TLS certificate
+  server.loadCertificate(certPem); // Load cert.pem
+  server.loadPrivateKey(keyPem);   // Load key.pem
 
   // Define HTTP routes
   server.on("/", HTTP_GET, []() { server.send(200, "text/html", htmlPage); });
